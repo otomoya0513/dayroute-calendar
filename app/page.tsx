@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 
 type Category = "仕事" | "買い物" | "食事" | "イベント" | "その他";
 type Place = { name: string; area: string; lat: number; lng: number };
+type PlaceSuggestion = Place & { id: string; address: string; type: string };
 type ScheduleEvent = Place & { id: string; title: string; date: string; start: string; end: string; category: Category; flexible: boolean };
 
 const places: Place[] = [
@@ -150,17 +151,83 @@ function Metric({ label, value }: { label: string; value: string }) { return <di
 
 function EventForm({ selectedDate, onClose, onSubmit }: { selectedDate: string; onClose: () => void; onSubmit: (event: ScheduleEvent) => void }) {
   const [title, setTitle] = useState(""), [date, setDate] = useState(selectedDate), [start, setStart] = useState("12:00"), [end, setEnd] = useState("13:00");
-  const [placeIndex, setPlaceIndex] = useState(1), [category, setCategory] = useState<Category>("その他"), [flexible, setFlexible] = useState(true);
+  const [category, setCategory] = useState<Category>("その他"), [flexible, setFlexible] = useState(true);
+  const [placeQuery, setPlaceQuery] = useState(""), [selectedPlace, setSelectedPlace] = useState<PlaceSuggestion | null>(null);
+  const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]), [searching, setSearching] = useState(false), [placeError, setPlaceError] = useState("");
+
+  useEffect(() => {
+    if (selectedPlace?.name === placeQuery || placeQuery.trim().length < 2) {
+      return;
+    }
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setSearching(true);
+      setPlaceError("");
+      try {
+        const response = await fetch(`/api/places?q=${encodeURIComponent(placeQuery.trim())}`, { signal: controller.signal });
+        const data = await response.json() as { places?: PlaceSuggestion[]; error?: string };
+        if (!response.ok) throw new Error(data.error);
+        setSuggestions(data.places ?? []);
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") {
+          setSuggestions([]);
+          setPlaceError("候補を取得できませんでした。もう一度入力してください。");
+        }
+      } finally {
+        if (!controller.signal.aborted) setSearching(false);
+      }
+    }, 350);
+    return () => { window.clearTimeout(timer); controller.abort(); };
+  }, [placeQuery, selectedPlace]);
+
+  function choosePlace(place: PlaceSuggestion) {
+    setSelectedPlace(place);
+    setPlaceQuery(place.name);
+    setSuggestions([]);
+    setPlaceError("");
+  }
+
   function submit(e: FormEvent) {
-    e.preventDefault(); if (!title.trim() || toMinutes(end) <= toMinutes(start)) return;
-    onSubmit({ id: `event-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`, title: title.trim(), date, start, end, category, flexible, ...places[placeIndex] });
+    e.preventDefault();
+    if (!title.trim() || toMinutes(end) <= toMinutes(start)) return;
+    if (!selectedPlace) {
+      setPlaceError("表示された候補から場所を選択してください。");
+      return;
+    }
+    onSubmit({ id: `event-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`, title: title.trim(), date, start, end, category, flexible, name: selectedPlace.name, area: selectedPlace.area, lat: selectedPlace.lat, lng: selectedPlace.lng });
   }
   return <div className="modal-backdrop" onMouseDown={onClose}><form className="event-form" onSubmit={submit} onMouseDown={e => e.stopPropagation()}>
     <div className="form-heading"><div><p className="eyebrow">NEW SCHEDULE</p><h2>予定を追加</h2></div><button type="button" onClick={onClose} aria-label="閉じる">×</button></div>
     <label>予定名<input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="例：展示会を見に行く" required /></label>
     <div className="form-grid">
       <label>日付<input type="date" value={date} onChange={e => setDate(e.target.value)} required /></label>
-      <label>場所<select value={placeIndex} onChange={e => setPlaceIndex(Number(e.target.value))}>{places.map((place, index) => <option key={place.name} value={index}>{place.name}</option>)}</select></label>
+      <label className="place-field">場所
+        <div className={`place-search ${selectedPlace ? "selected" : ""}`}>
+          <span className="search-mark" aria-hidden="true">⌕</span>
+          <input
+            value={placeQuery}
+            onChange={e => { setPlaceQuery(e.target.value); setSelectedPlace(null); setSuggestions([]); setSearching(e.target.value.trim().length >= 2); setPlaceError(""); }}
+            placeholder="駅名・施設名・住所を入力"
+            autoComplete="off"
+            role="combobox"
+            aria-expanded={suggestions.length > 0}
+            aria-controls="place-suggestions"
+            aria-autocomplete="list"
+            required
+          />
+          {searching && <span className="search-spinner" aria-label="検索中" />}
+          {selectedPlace && <span className="selected-check" aria-label="場所を選択済み">✓</span>}
+        </div>
+        {suggestions.length > 0 && <div className="suggestion-list" id="place-suggestions" role="listbox">
+          {suggestions.map(place => <button type="button" key={place.id} role="option" aria-selected="false" onClick={() => choosePlace(place)}>
+            <span className="suggestion-icon">{place.type === "駅" ? "🚉" : place.type === "店舗" ? "⌂" : "⌖"}</span>
+            <span className="suggestion-copy"><strong>{place.name}</strong><small>{place.type}・{place.address}</small></span>
+          </button>)}
+        </div>}
+        {!searching && placeQuery.trim().length >= 2 && !selectedPlace && suggestions.length === 0 && !placeError && <span className="field-hint">該当する候補がありません。別の名称や住所をお試しください。</span>}
+        {placeError && <span className="field-error" role="alert">{placeError}</span>}
+        <span className="place-credit">検索データ © OpenStreetMap contributors</span>
+      </label>
       <label>開始<input type="time" value={start} onChange={e => setStart(e.target.value)} required /></label><label>終了<input type="time" value={end} onChange={e => setEnd(e.target.value)} min={start} required /></label>
       <label>カテゴリ<select value={category} onChange={e => setCategory(e.target.value as Category)}>{categories.map(item => <option key={item}>{item}</option>)}</select></label>
       <label className="check-label"><input type="checkbox" checked={flexible} onChange={e => setFlexible(e.target.checked)} /><span>時間・場所を調整できる予定</span></label>
