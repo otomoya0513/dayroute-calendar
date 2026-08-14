@@ -15,18 +15,26 @@ tags:
     css: "#view-week"
 - assertVisible: CALENDAR OVERVIEW
 - assertVisible:
-    css: ".week-overview"
+    css: "#view-week.active"
+- assertVisible:
+    text: ".*—.*の予定"
 
 - tapOn:
     css: "#view-month"
 - assertVisible:
-    css: ".month-overview"
+    css: "#view-month.active"
+- assertVisible:
+    text: ".*年.*月の予定"
 
 - tapOn:
     css: "#view-year"
 - assertVisible:
-    css: ".year-overview"
+    css: "#view-year.active"
+- assertVisible:
+    text: ".*年の予定"
 
 - tapOn:
     css: "#view-day"
+- assertVisible:
+    css: "#view-day.active"
 - assertVisible: 時間順の予定
