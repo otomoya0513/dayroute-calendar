@@ -20,7 +20,7 @@ jobs:
       github.event_name != 'deployment_status' ||
       github.event.deployment_status.state == 'success'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
 
     steps:
       - name: Checkout repository
@@ -48,10 +48,37 @@ jobs:
           done
           exit 1
 
-      - name: Run Maestro browser tests
+      - name: Run production smoke test
         env:
           MAESTRO_CLI_NO_ANALYTICS: "1"
         run: |
-          xvfb-run --auto-servernum \
+          timeout --kill-after=30s 5m \
+            xvfb-run --auto-servernum \
             --server-args="-screen 0 1920x1080x24" \
-            maestro test .maestro
+            maestro test .maestro/01-production-smoke.yaml
+
+      - name: Run event creation test
+        env:
+          MAESTRO_CLI_NO_ANALYTICS: "1"
+        run: |
+          timeout --kill-after=30s 5m \
+            xvfb-run --auto-servernum \
+            --server-args="-screen 0 1920x1080x24" \
+            maestro test .maestro/02-create-event.yaml
+
+      - name: Run favorite and start-location test
+        env:
+          MAESTRO_CLI_NO_ANALYTICS: "1"
+        run: |
+          timeout --kill-after=30s 5m \
+            xvfb-run --auto-servernum \
+            --server-args="-screen 0 1920x1080x24" \
+            maestro test .maestro/03-favorite-start-location.yaml
+
+      - name: Upload Maestro debug files
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: maestro-debug
+          path: ~/.maestro/tests
+          if-no-files-found: ignore
