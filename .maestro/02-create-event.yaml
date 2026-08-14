@@ -1,0 +1,37 @@
+url: https://dayroute-calendar.vercel.app
+name: Create an event with a suggested place
+tags:
+  - regression
+---
+- launchApp:
+    clearState: true
+
+- tapOn:
+    css: "#add-event-button"
+- assertVisible:
+    css: "#event-form"
+
+- tapOn:
+    css: "#event-title"
+- inputText: Maestro E2E schedule
+
+- tapOn:
+    css: "#event-place-search-input"
+- inputText: 東京ドーム
+- extendedWaitUntil:
+    visible:
+      css: "#event-place-search-results button"
+    timeout: 15000
+- tapOn:
+    css: "#event-place-search-results button:first-child"
+
+- tapOn:
+    css: "#submit-event-button"
+- assertVisible: Maestro E2E schedule
+- assertVisible: 予定を追加しました
+
+# DayRoute stores schedules in localStorage. Reload without clearing it and
+# confirm that the newly created schedule remains visible.
+- launchApp:
+    clearState: false
+- assertVisible: Maestro E2E schedule

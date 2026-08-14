@@ -1,0 +1,42 @@
+url: https://dayroute-calendar.vercel.app
+name: Save a favorite and use it as the start location
+tags:
+  - regression
+---
+- launchApp:
+    clearState: true
+
+- tapOn:
+    css: "#saved-places-button"
+- assertVisible:
+    css: "#place-manager"
+
+- tapOn:
+    css: "#manager-place-search-input"
+- inputText: 東京駅
+- extendedWaitUntil:
+    visible:
+      css: "#manager-place-search-results button"
+    timeout: 15000
+- tapOn:
+    css: "#manager-place-search-results button:first-child"
+
+- tapOn:
+    css: "#favorite-label"
+- eraseText: 50
+- inputText: 自宅
+- tapOn:
+    css: "#save-favorite-button"
+- assertVisible: お気に入り地点を保存しました
+
+- tapOn:
+    css: "#set-start-location-button"
+- assertVisible: 開始地点を設定しました
+- assertVisible:
+    css: ".current-start"
+
+- tapOn:
+    css: "#place-manager .form-heading button"
+- assertVisible:
+    css: "#start-point-card"
+- assertVisible: START POINT

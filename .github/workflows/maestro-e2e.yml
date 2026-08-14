@@ -1,0 +1,47 @@
+name: Maestro E2E
+
+on:
+  workflow_dispatch:
+  deployment_status:
+  schedule:
+    # Every day at 09:00 JST (00:00 UTC).
+    - cron: "0 0 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: maestro-production-e2e
+  cancel-in-progress: true
+
+jobs:
+  production-e2e:
+    if: >-
+      github.event_name != 'deployment_status' ||
+      github.event.deployment_status.state == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Maestro CLI
+        run: |
+          curl -Ls "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Wait for the production site
+        run: |
+          for attempt in {1..20}; do
+            if curl --fail --silent --show-error --max-time 10 \
+              https://dayroute-calendar.vercel.app >/dev/null; then
+              exit 0
+            fi
+            echo "Production site is not ready yet (attempt ${attempt}/20)"
+            sleep 15
+          done
+          exit 1
+
+      - name: Run Maestro browser tests
+        run: maestro test .maestro

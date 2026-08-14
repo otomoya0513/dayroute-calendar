@@ -1,0 +1,32 @@
+url: https://dayroute-calendar.vercel.app
+name: Production smoke and calendar views
+tags:
+  - smoke
+---
+- launchApp:
+    clearState: true
+
+- assertVisible: DayRoute
+- assertVisible: 時間順の予定
+- assertVisible:
+    css: "#add-event-button"
+
+- tapOn:
+    css: "#view-week"
+- assertVisible: CALENDAR OVERVIEW
+- assertVisible:
+    css: ".week-overview"
+
+- tapOn:
+    css: "#view-month"
+- assertVisible:
+    css: ".month-overview"
+
+- tapOn:
+    css: "#view-year"
+- assertVisible:
+    css: ".year-overview"
+
+- tapOn:
+    css: "#view-day"
+- assertVisible: 時間順の予定
