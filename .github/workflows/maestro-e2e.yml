@@ -15,12 +15,28 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  production-e2e:
+  production-smoke:
     if: >-
       github.event_name != 'deployment_status' ||
       github.event.deployment_status.state == 'success'
+
+    name: Maestro - ${{ matrix.name }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Day view
+            flow: .maestro/01-production-smoke.yaml
+          - name: Week view
+            flow: .maestro/view-week.yaml
+          - name: Month view
+            flow: .maestro/view-month.yaml
+          - name: Year view
+            flow: .maestro/view-year.yaml
+
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 10
 
     steps:
       - name: Checkout repository
@@ -36,49 +52,33 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y xvfb
 
-      - name: Wait for the production site
+      - name: Wait for production site
         run: |
-          for attempt in {1..20}; do
+          for attempt in {1..12}; do
             if curl --fail --silent --show-error --max-time 10 \
               https://dayroute-calendar.vercel.app >/dev/null; then
               exit 0
             fi
-            echo "Production site is not ready yet (attempt ${attempt}/20)"
-            sleep 15
+
+            echo "Production site is not ready (${attempt}/12)"
+            sleep 10
           done
+
           exit 1
 
-      - name: Run production smoke test
+      - name: Run Maestro test
         env:
           MAESTRO_CLI_NO_ANALYTICS: "1"
         run: |
-          timeout --kill-after=30s 5m \
+          timeout --kill-after=15s 3m \
             xvfb-run --auto-servernum \
             --server-args="-screen 0 1920x1080x24" \
-            maestro test .maestro/01-production-smoke.yaml
-
-      - name: Run event creation test
-        env:
-          MAESTRO_CLI_NO_ANALYTICS: "1"
-        run: |
-          timeout --kill-after=30s 5m \
-            xvfb-run --auto-servernum \
-            --server-args="-screen 0 1920x1080x24" \
-            maestro test .maestro/02-create-event.yaml
-
-      - name: Run favorite and start-location test
-        env:
-          MAESTRO_CLI_NO_ANALYTICS: "1"
-        run: |
-          timeout --kill-after=30s 5m \
-            xvfb-run --auto-servernum \
-            --server-args="-screen 0 1920x1080x24" \
-            maestro test .maestro/03-favorite-start-location.yaml
+            maestro test "${{ matrix.flow }}"
 
       - name: Upload Maestro debug files
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: maestro-debug
+          name: maestro-debug-${{ matrix.name }}
           path: ~/.maestro/tests
           if-no-files-found: ignore

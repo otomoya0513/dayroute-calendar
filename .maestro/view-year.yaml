@@ -1,5 +1,5 @@
 url: https://dayroute-calendar.vercel.app
-name: Day view smoke
+name: Year calendar view
 tags:
   - smoke
 ---
@@ -7,5 +7,9 @@ tags:
     clearState: true
 
 - assertVisible: DayRoute
-- assertVisible: TODAY'S ROUTE
-- assertVisible: 時間順の予定
+
+- tapOn:
+    css: "#view-year"
+
+- assertVisible:
+    text: "^[0-9]{4}年の予定$"

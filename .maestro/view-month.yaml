@@ -1,0 +1,15 @@
+url: https://dayroute-calendar.vercel.app
+name: Month calendar view
+tags:
+  - smoke
+---
+- launchApp:
+    clearState: true
+
+- assertVisible: DayRoute
+
+- tapOn:
+    css: "#view-month"
+
+- assertVisible:
+    text: "^[0-9]{4}年[0-9]{1,2}月の予定$"
