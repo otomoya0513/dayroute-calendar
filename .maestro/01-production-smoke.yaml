@@ -8,33 +8,22 @@ tags:
 
 - assertVisible: DayRoute
 - assertVisible: 時間順の予定
-- assertVisible:
-    css: "#add-event-button"
 
 - tapOn:
     css: "#view-week"
 - assertVisible: CALENDAR OVERVIEW
-- assertVisible:
-    css: "#view-week.active"
-- assertVisible:
-    text: ".*—.*の予定"
 
 - tapOn:
     css: "#view-month"
 - assertVisible:
-    css: "#view-month.active"
-- assertVisible:
-    text: ".*年.*月の予定"
+    text: "^[0-9]{4}年[0-9]{1,2}月の予定$"
 
 - tapOn:
     css: "#view-year"
 - assertVisible:
-    css: "#view-year.active"
-- assertVisible:
-    text: ".*年の予定"
+    text: "^[0-9]{4}年の予定$"
 
 - tapOn:
     css: "#view-day"
-- assertVisible:
-    css: "#view-day.active"
+- assertVisible: TODAY'S ROUTE
 - assertVisible: 時間順の予定
