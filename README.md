@@ -1,46 +1,41 @@
-# vinext-starter
+# vinext スターター
 
-A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
+[vinext](https://github.com/cloudflare/vinext) 上で動作する、シンプルなフルスタックのスターターです。
+必要に応じて Cloudflare D1 と Drizzle も利用できます。
 
-## Prerequisites
+## 前提条件
 
 - Node.js `>=22.13.0`
-- Linux with `flock`, `curl`, and GNU `timeout`
+- `flock`、`curl`、GNU `timeout` を利用できる Linux
 
-## Sites Lifecycle
+## Sites のライフサイクル
 
-The Sites lifecycle CLI runs the locked dependency install before returning this checkout. Edit the source under `app/`, then checkpoint when a coherent milestone is ready to inspect or share. The remote Sites builder runs `npm run build` against the pushed commit. Do not repeat install or build as a normal pre-checkpoint step.
+Sites のライフサイクル CLI は、このチェックアウトを返す前にロックファイルに基づく依存関係のインストールを実行します。`app/` 以下のソースを編集し、確認または共有できるまとまりになった時点でチェックポイントを作成してください。リモートの Sites ビルダーは、Push されたコミットに対して `npm run build` を実行します。通常のチェックポイント前の手順として、インストールやビルドを繰り返さないでください。
 
-This starter does not use `wrangler.jsonc`.
+このスターターでは `wrangler.jsonc` を使用しません。
 
-`install:ci` is intentionally a single, non-retrying `npm ci`. It refuses a concurrent install for the same project, consumes a matching image-seeded npm cache with `--prefer-offline` while retaining registry fallback for a missing cache object, otherwise downloads and verifies the complete vinext tarball recorded in `package-lock.json`, limits npm to one socket, and terminates a stalled install. `build` applies a short timeout and then validates the Sites artifact. These helpers target Linux and use GNU `timeout`; they are not native macOS scripts.
+`install:ci` は、意図的に再試行を行わず、`npm ci` を1回だけ実行します。同じプロジェクトでの同時インストールを拒否し、一致するイメージ組み込み済みの npm キャッシュを `--prefer-offline` で利用します。キャッシュオブジェクトがない場合はレジストリへフォールバックし、それ以外の場合は `package-lock.json` に記録された vinext の tarball 全体をダウンロードして検証します。また、npm のソケット数を1つに制限し、停止したインストールを終了します。`build` は短いタイムアウトを適用した後、Sites の成果物を検証します。これらの補助スクリプトは Linux を対象として GNU `timeout` を使用するため、macOS ネイティブのスクリプトではありません。
 
-Scripts that need writable project-scoped home, npm, XDG, and temporary paths use `scripts/sites-env.sh`. The `dev` and `start` scripts honor the caller's runtime environment and keep Wrangler logs inside the checkout. The generated `.sites-runtime/` directory is disposable and ignored by Git.
+プロジェクト単位で書き込み可能なホーム、npm、XDG、一時パスを必要とするスクリプトは、`scripts/sites-env.sh` を使用します。`dev` と `start` の各スクリプトは呼び出し元の実行環境を尊重し、Wrangler のログをチェックアウト内に保持します。生成される `.sites-runtime/` ディレクトリは破棄可能で、Git の管理対象外です。
 
-## Included Shape
+## 含まれる構成
 
-- edit site code under `app/`
-- `app/chatgpt-auth.ts` provides optional dispatch-owned ChatGPT sign-in helpers
-- `.openai/hosting.json` declares optional Sites D1 and R2 bindings
-- `vite.config.ts` simulates declared bindings for local development
-- `db/index.ts` reads the D1 binding from the Cloudflare Worker environment
-- `db/schema.ts` starts intentionally empty
-- `examples/d1/` contains an optional D1 example surface
-- `drizzle.config.ts` supports local migration generation when needed
+- サイトのコードは `app/` 以下で編集します
+- `app/chatgpt-auth.ts` は、Dispatch が管理する任意の ChatGPT サインイン補助関数を提供します
+- `.openai/hosting.json` は、任意の Sites D1 および R2 バインディングを宣言します
+- `vite.config.ts` は、ローカル開発用に宣言済みのバインディングを再現します
+- `db/index.ts` は、Cloudflare Worker 環境から D1 バインディングを読み取ります
+- `db/schema.ts` は、意図的に空の状態から始まります
+- `examples/d1/` には、任意で利用できる D1 のサンプル画面が含まれます
+- `drizzle.config.ts` は、必要に応じたローカルでのマイグレーション生成に対応します
 
-## Workspace Auth Headers
+## ワークスペース認証ヘッダー
 
-OpenAI workspace sites can read the current user's email from
-`oai-authenticated-user-email`.
+OpenAI ワークスペースのサイトは、`oai-authenticated-user-email` から現在のユーザーのメールアドレスを読み取れます。
 
-SIWC-authenticated workspace sites may also receive
-`oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty
-`name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by
-`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
+SIWC で認証されたワークスペースのサイトでは、ユーザーの SIWC プロフィールに空でない `name` クレームがある場合、`oai-authenticated-user-full-name` も受け取ることがあります。氏名の値はパーセントエンコードされた UTF-8 で、`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8` が付随します。
 
-Treat the full name as optional and fall back to email when it is absent:
+氏名は任意項目として扱い、存在しない場合はメールアドレスへフォールバックしてください。
 
 ```tsx
 import { headers } from "next/headers";
@@ -61,48 +56,37 @@ export default async function Home() {
 }
 ```
 
-## Optional Dispatch-Owned ChatGPT Sign-In
+## Dispatch が管理する任意の ChatGPT サインイン
 
-Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs
-optional or required ChatGPT sign-in:
+サイトで任意または必須の ChatGPT サインインが必要な場合は、`app/chatgpt-auth.ts` からすぐに使える補助関数をインポートしてください。
 
-- Use `getChatGPTUser()` for optional signed-in UI.
-- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send
-  anonymous visitors through Sign in with ChatGPT.
-- Use `chatGPTSignInPath(returnTo)` and `chatGPTSignOutPath(returnTo)` for
-  browser links or actions.
-- Pass a same-origin relative `returnTo` path for the destination after sign-in
-  or sign-out. The helper validates and safely encodes it.
-- Mark protected pages with `export const dynamic = "force-dynamic"` because
-  they depend on per-request identity headers.
+- 任意のサインイン済み UI には `getChatGPTUser()` を使用します。
+- 匿名の訪問者を ChatGPT サインインへ誘導するサーバーレンダリングページには、`requireChatGPTUser(returnTo)` を使用します。
+- ブラウザーのリンクまたはアクションには、`chatGPTSignInPath(returnTo)` と `chatGPTSignOutPath(returnTo)` を使用します。
+- サインインまたはサインアウト後の移動先として、同一オリジンの相対 `returnTo` パスを渡します。補助関数が検証し、安全にエンコードします。
+- 保護対象のページはリクエストごとの識別ヘッダーに依存するため、`export const dynamic = "force-dynamic"` を指定します。
 
-Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the
-OAuth cookies, and identity header injection. Do not implement app routes for
-those reserved paths. Routes that do not import and call the helper remain
-anonymous-compatible.
+Dispatch は `/signin-with-chatgpt`、`/signout-with-chatgpt`、`/callback`、OAuth Cookie、識別ヘッダーの注入を管理します。これらの予約済みパスにアプリのルートを実装しないでください。補助関数をインポートして呼び出さないルートは、匿名アクセスとの互換性を維持します。
 
-SIWC establishes identity only; it does not prove workspace membership. Use the
-Sites hosting platform's access policy controls for workspace-wide restrictions,
-or enforce explicit server-side membership or allowlist checks.
+SIWC が確立するのは識別情報のみで、ワークスペースへの所属を証明するものではありません。ワークスペース全体を制限する場合は Sites ホスティングプラットフォームのアクセスポリシー制御を使用するか、サーバー側で明示的なメンバーシップ確認または許可リスト確認を実施してください。
 
-Use SIWC for account pages, user-specific dashboards, saved records, and write
-actions tied to the current ChatGPT user. Leave public content anonymous.
+SIWC は、アカウントページ、ユーザー固有のダッシュボード、保存済みレコード、現在の ChatGPT ユーザーに紐づく書き込み操作に使用します。公開コンテンツは匿名のままにしてください。
 
-## Diagnostic Commands
+## 診断コマンド
 
-- `npm run install:ci`: perform the one bounded lockfile install
-- `npm run dev`: start the Vite/Vinext development server
-- `npm run build`: build and validate the deployable Sites artifact
-- `npm run start`: start the built Vinext application
-- `npm test`: build, validate, and verify the rendered development-preview metadata
-- `npm run validate:artifact`: recheck an existing artifact's manifest and ESM `default.fetch` export
-- `npm run db:generate`: generate Drizzle migrations after schema changes
+- `npm run install:ci`: ロックファイルに基づく、制限時間付きのインストールを1回実行します
+- `npm run dev`: Vite/Vinext 開発サーバーを起動します
+- `npm run build`: デプロイ可能な Sites 成果物をビルドして検証します
+- `npm run start`: ビルド済みの Vinext アプリケーションを起動します
+- `npm test`: ビルドと検証を行い、レンダリングされた開発プレビューのメタデータを確認します
+- `npm run validate:artifact`: 既存の成果物のマニフェストと ESM の `default.fetch` エクスポートを再確認します
+- `npm run db:generate`: スキーマ変更後に Drizzle のマイグレーションを生成します
 
-Use build and validation commands for targeted diagnosis after a remote failure, not as part of the normal checkpoint path.
+ビルドおよび検証コマンドは、通常のチェックポイント手順ではなく、リモートで失敗した後の対象を絞った診断に使用してください。
 
-The timeout defaults can be overridden for a controlled canary with `SITES_INSTALL_TIMEOUT`, `SITES_INSTALL_KILL_AFTER`, `SITES_BUILD_TIMEOUT`, and `SITES_BUILD_KILL_AFTER`. A timeout fails the command; the helpers never retry an unchanged install or build.
+制御されたカナリア実行では、`SITES_INSTALL_TIMEOUT`、`SITES_INSTALL_KILL_AFTER`、`SITES_BUILD_TIMEOUT`、`SITES_BUILD_KILL_AFTER` を使って既定のタイムアウトを上書きできます。タイムアウトするとコマンドは失敗し、補助スクリプトが変更のないインストールやビルドを再試行することはありません。
 
-## Learn More
+## 関連情報
 
-- [vinext Documentation](https://github.com/cloudflare/vinext)
-- [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+- [vinext ドキュメント](https://github.com/cloudflare/vinext)
+- [Drizzle D1 ガイド](https://orm.drizzle.team/docs/get-started/d1-new)
