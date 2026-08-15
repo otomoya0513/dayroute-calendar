@@ -1,4 +1,4 @@
-name: Maestro E2E
+name: Maestro E2Eテスト
 
 on:
   workflow_dispatch:
@@ -26,33 +26,33 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: Day view
+          - name: 日表示
             flow: .maestro/01-production-smoke.yaml
-          - name: Week view
+          - name: 週表示
             flow: .maestro/view-week.yaml
-          - name: Month view
+          - name: 月表示
             flow: .maestro/view-month.yaml
-          - name: Year view
+          - name: 年表示
             flow: .maestro/view-year.yaml
 
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
-      - name: Checkout repository
+      - name: リポジトリをチェックアウト
         uses: actions/checkout@v4
 
-      - name: Install Maestro CLI
+      - name: Maestro CLIをインストール
         run: |
           curl -Ls "https://get.maestro.mobile.dev" | bash
           echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
 
-      - name: Install virtual display
+      - name: 仮想ディスプレイをインストール
         run: |
           sudo apt-get update
           sudo apt-get install -y xvfb
 
-      - name: Wait for production site
+      - name: 本番サイトの起動を待機
         run: |
           for attempt in {1..12}; do
             if curl --fail --silent --show-error --max-time 10 \
@@ -66,7 +66,7 @@ jobs:
 
           exit 1
 
-      - name: Run Maestro test
+      - name: Maestroテストを実行
         env:
           MAESTRO_CLI_NO_ANALYTICS: "1"
         run: |
@@ -75,7 +75,7 @@ jobs:
             --server-args="-screen 0 1920x1080x24" \
             maestro test "${{ matrix.flow }}"
 
-      - name: Upload Maestro debug files
+      - name: Maestroデバッグファイルをアップロード
         if: always()
         uses: actions/upload-artifact@v4
         with:

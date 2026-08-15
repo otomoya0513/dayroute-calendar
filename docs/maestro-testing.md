@@ -1,28 +1,26 @@
-# DayRoute Maestro E2E tests
+# DayRoute Maestro E2E テスト
 
-The flows in `.maestro/` test the production application at
-`https://dayroute-calendar.vercel.app`.
+`.maestro/` 内のフローは、`https://dayroute-calendar.vercel.app` の本番アプリケーションをテストします。
 
-## Coverage
+## テスト範囲
 
-- Production page load and day/week/month/year view switching
-- Event creation using place autocomplete
-- Schedule persistence after a browser reload
-- Favorite-place creation and start-location selection
+- 本番ページの読み込みと、日・週・月・年表示の切り替え
+- 場所のオートコンプリートを使用した予定の作成
+- ブラウザー再読み込み後の予定の保持
+- お気に入り地点の作成と開始地点の選択
 
-Every flow clears browser state at the beginning, so it can run independently.
-The event flow intentionally reloads once without clearing state to verify
-DayRoute's localStorage persistence.
+各フローは開始時にブラウザーの状態を消去するため、個別に実行できます。
+予定作成フローでは、DayRoute の localStorage によるデータ保持を検証するため、意図的に状態を消去せず一度再読み込みします。
 
-## Run locally
+## ローカルでの実行
 
-Install Maestro CLI, then run all flows from the repository root:
+Maestro CLI をインストールし、リポジトリのルートからすべてのフローを実行します。
 
 ```powershell
 maestro test .maestro
 ```
 
-Run only the fast production smoke test:
+短時間で完了する本番スモークテストのみを実行します。
 
 ```powershell
 maestro test .maestro --include-tags smoke
@@ -30,10 +28,10 @@ maestro test .maestro --include-tags smoke
 
 ## GitHub Actions
 
-`.github/workflows/maestro-e2e.yml` runs:
+`.github/workflows/maestro-e2e.yml` は、以下のタイミングで実行されます。
 
-- manually from **Actions > Maestro E2E > Run workflow**
-- after a successful deployment status event
-- every day at 09:00 JST
+- **Actions > Maestro E2Eテスト > Run workflow** から手動で実行したとき
+- デプロイ成功のステータスイベントを受け取った後
+- 毎日 09:00（日本標準時）
 
-The workflow targets the production Vercel URL and does not require secrets.
+このワークフローは Vercel の本番 URL を対象とし、シークレットを必要としません。

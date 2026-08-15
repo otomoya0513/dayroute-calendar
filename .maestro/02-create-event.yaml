@@ -1,5 +1,5 @@
 url: https://dayroute-calendar.vercel.app
-name: Create an event with a suggested place
+name: 候補から場所を選んで予定を作成
 tags:
   - regression
 ---
@@ -30,8 +30,8 @@ tags:
 - assertVisible: Maestro E2E schedule
 - assertVisible: 予定を追加しました
 
-# DayRoute stores schedules in localStorage. Reload without clearing it and
-# confirm that the newly created schedule remains visible.
+# DayRouteは予定をlocalStorageに保存する。状態を消去せずに再読み込みし、
+# 新しく作成した予定が引き続き表示されることを確認する。
 - launchApp:
     clearState: false
 - assertVisible: Maestro E2E schedule
